@@ -208,6 +208,7 @@ ROAD,</p>
                 "Item",
                 "Pack",
                 "HSNCode",
+                "Rate",
                 "Batch",
                 "Expiry",
                 "Qty",
@@ -252,6 +253,9 @@ ROAD,</p>
 
                 <td className="border-l border-r border-black text-center">{item.pack || "-"}</td>
                 <td className="border-l border-r border-black">{item.hsn || "-"}</td>
+                <td className="border-l border-r border-black text-left">
+  ₹{item.rate?.toFixed(2) || "0.00"}
+</td>
                 <td className="border-l border-r border-black">{item.batch || "-"}</td>
                 <td className="border-l border-r border-black">{item.expiry || "-"}</td>
                 <td className="border-l border-r border-black text-center">{item.qty}</td>
@@ -280,7 +284,7 @@ ROAD,</p>
             {/* ✅ EMPTY ROWS */}
             {Array.from({ length: emptyRows > 0 ? emptyRows : 0 }).map((_, i) => (
               <tr key={`empty-${i}`}>
-                {Array(invoice.invoiceType === "GST" ? 14 : 12)
+                {Array(invoice.invoiceType === "GST" ? 15 : 13)
                   .fill("")
                   .map((_, idx) => (
                     <td key={idx} className="border-l border-r border-black h-[16px]">
