@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom variables */
+:root {
+  --accent: #4f46e5;
+  --accent-bg: #e0e7ff;
+}
+
+body {
+  @apply bg-gray-100 text-gray-800 font-sans;
+}
+
+/* ✅ ADD THIS: Custom 14 column grid */
+.grid-cols-14 {
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+}
+
+/* ✅ PRINT ONLY INVOICE */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #invoice-pdf,
+  #invoice-pdf * {
+    visibility: visible;
+  }
+
+  #invoice-pdf {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+}
+/* ✅ A4 SETTINGS */
+@media print {
+  @page {
+    size: A4;
+    margin: 25mm;
+  }
+}
+
+/* ✅ COLOR FIX */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* ========================= */
+/* 🔥 NEW ADDITIONS START 🔥 */
+/* ========================= */
+
+@media print {
+
+  /* ✅ Allow table to adjust naturally */
+  #invoice table {
+    table-layout: auto !important;
+    width: 100%;
+  }
+
+  /* ✅ Prevent overflow + allow wrapping */
+  #invoice th,
+  #invoice td {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    word-break: break-word;
+    max-width: none !important;
+  }
+
+  /* ✅ Ensure long item names wrap properly */
+  #invoice td {
+    line-height: 1.2;
+  }
+
+  /* ✅ Slight font adjustment for A4 fit */
+  #invoice {
+    font-size: 9px;
+  }
+}
+
+/* ========================= */
+/* 🔥 NEW ADDITIONS END 🔥 */
+/* ========================= */
+/* Fix overflow issues in PDF */
+#invoice-pdf {
+  word-break: break-word;
+}
+
+#invoice-pdf p {
+  margin: 0;
+}
+
+#invoice-pdf .flex {
+  display: flex;
+  align-items: flex-start;
+}
+
+@media print {
+  body {
+    margin: 0;
+  }
+
+  #invoice-pdf {
+    page-break-after: avoid;
+    page-break-inside: avoid;
+  }
+}
+
+
+
