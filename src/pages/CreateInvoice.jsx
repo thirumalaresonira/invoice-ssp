@@ -72,37 +72,16 @@ const CreateInvoice = () => {
       }
     }
 
-    const base = updated[index].qty * (updated[index].pts || updated[index].rate || 0);
+     // ✅ ✅ FIX: ONLY BASE CALCULATION (NO GST HERE)
+    const base = updated[index].qty * (updated[index].rate || 0);
 
-     if (invoiceType === "GST") {
-      if (gstType === "INTRA") {
-        const cgst = (base * updated[index].gst) / 200;
-        const sgst = (base * updated[index].gst) / 200;
-
-        updated[index].cgst = cgst;
-        updated[index].sgst = sgst;
-        updated[index].igst = 0;
-
-        updated[index].total = base + cgst + sgst;
-      } else {
-        const igst = (base * updated[index].gst) / 100;
-
-        updated[index].igst = igst;
-        updated[index].cgst = 0;
-        updated[index].sgst = 0;
-
-        updated[index].total = base + igst;
-      }
-    } else {
-      updated[index].cgst = 0;
-      updated[index].sgst = 0;
-      updated[index].igst = 0;
-      updated[index].total = base;
-    }
+    updated[index].total = base;
+    updated[index].cgst = 0;
+    updated[index].sgst = 0;
+    updated[index].igst = 0;
 
     setItems(updated);
   };
-
 
   const addItem = () => {
     setItems([
@@ -137,7 +116,7 @@ const CreateInvoice = () => {
     setItems(updated.length ? updated : [
       {
         name: "",
-        qty: 1,
+        qty: 0,
         rate: 0,
         gst: 0,
         hsn: "",
@@ -160,7 +139,7 @@ const CreateInvoice = () => {
 
   const totals =
     invoiceType === "GST"
-      ? calculateGST(items)
+      ? calculateGST(items, customer.state, "Telangana")
       : {
           items: items.map(i => ({
             ...i,
@@ -176,7 +155,7 @@ const CreateInvoice = () => {
   const handleGenerate = () => {
     const calculated =
       invoiceType === "GST"
-        ? calculateGST(items)
+        ? calculateGST(items, customer.state, "Telangana")
         : totals;
 
     const invoice = {
@@ -186,6 +165,7 @@ const CreateInvoice = () => {
       customerName: customer.name,
       phone: customer.phone,
       address: customer.address,
+      state:customer.state,
       paymentMode,
       items: calculated.items || [],
     subtotal: calculated.subtotal,
@@ -250,7 +230,10 @@ const CreateInvoice = () => {
           onChange={e => setCustomer({ ...customer, phone: e.target.value })} />
         <input className="border px-3 py-2 rounded" placeholder="Address"
           onChange={e => setCustomer({ ...customer, address: e.target.value })} />
+         <input className="border px-3 py-2 rounded" placeholder="State"
+          onChange={e => setCustomer({ ...customer, state: e.target.value })} />
       </div>
+      
 
       {/* TABLE */}
       <div className="overflow-auto bg-white rounded shadow">
@@ -285,13 +268,19 @@ const CreateInvoice = () => {
                 }`}
               >
                 <td className="border p-1">
-                  <select className="w-full"
-                    onChange={e => handleChange(i, "name", e.target.value)}>
-                    <option>Select</option>
-                    {inventory.map(p => (
-                      <option key={p.id}>{p.name}</option>
+                  <input
+                    className="w-full"
+                    list="products"
+                    value={item.name}
+                    onChange={(e) =>
+                      handleChange(i, "name", e.target.value)
+                    }
+                  />
+                  <datalist id="products">
+                    {inventory.map((p) => (
+                      <option key={p.id} value={p.name} />
                     ))}
-                  </select>
+                  </datalist>
                 </td>
 
                 <td className="border p-1">
@@ -353,12 +342,14 @@ const CreateInvoice = () => {
 
                 <td className="border p-1">
                   <input className="w-full"
+                    type="number"
                     value={item.ptr}
                     onChange={e => handleChange(i, "ptr", e.target.value)} />
                 </td>
 
                 <td className="border p-1">
                   <input className="w-full"
+                    type="number"
                     value={item.pts}
                     onChange={e => handleChange(i, "pts", e.target.value)} />
                 </td>
@@ -397,19 +388,16 @@ const CreateInvoice = () => {
         </button>
       </div>
 
-      {/* Totals */}
+       {/* Totals */}
       <div className="mt-6 border-t pt-4 text-right">
         <p>Subtotal: ₹{totals?.subtotal?.toFixed(2)}</p>
 
-         {invoiceType === "GST" && gstType === "INTRA" && (
+        {invoiceType === "GST" && (
           <>
             <p>CGST: ₹{totals?.cgstTotal?.toFixed(2)}</p>
             <p>SGST: ₹{totals?.sgstTotal?.toFixed(2)}</p>
+            <p>IGST: ₹{totals?.igstTotal?.toFixed(2)}</p>
           </>
-        )}
-
-        {invoiceType === "GST" && gstType === "INTER" && (
-          <p>IGST: ₹{totals?.igstTotal?.toFixed(2)}</p>
         )}
 
         <p className="font-bold text-lg">

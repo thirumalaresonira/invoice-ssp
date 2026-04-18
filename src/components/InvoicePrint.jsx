@@ -49,61 +49,19 @@ const customerState = invoice.customerState
 
 const isInterState = hospitalState !== customerState;
 
-const gstSummary = {};
+// ✅ ✅ FIX: USE GST DATA FROM CALCULATOR (NO RE-CALCULATION)
+  const gstSummary = invoice?.gstSummary || {};
 
-(invoice.items || []).forEach((item) => {
-  const gst = Number(item?.gst) || 0;
-
-  const base =
-    Number(item?.amount) ||
-    Number(item?.qty || 0) * Number(item?.rate || item?.pts || 0);
-
-const gstAmount = (base * gst) / 100;
-
-  if (!gstSummary[gst]) {
-    gstSummary[gst] = {
-       taxable: 0,
-  cgst: 0,
-  sgst: 0,
-  igst: 0
-    };
-  }
-
-  gstSummary[gst].taxable += base;
-
-  if (isInterState) {
-    gstSummary[gst].igst += gstAmount;
-  } else {
-    gstSummary[gst].cgst += gstAmount / 2;
-    gstSummary[gst].sgst += gstAmount / 2;
-  }
-});
-
-  
-    const totalTaxable = Object.values(gstSummary).reduce(
-  (sum, item) => sum + (item.taxable || 0),
-  0
-);
-
-const totalCGST = Object.values(gstSummary).reduce(
-  (sum, item) => sum + (item.cgst || 0),
-  0
-);
-
-const totalSGST = Object.values(gstSummary).reduce(
-  (sum, item) => sum + (item.sgst || 0),
-  0
-);
-
-const totalIGST = Object.values(gstSummary).reduce(
-  (sum, item) => sum + (item.igst || 0),
-  0
-);
+  const totalTaxable = invoice?.subtotal || 0;
+  const totalCGST = invoice?.cgstTotal || 0;
+  const totalSGST = invoice?.sgstTotal || 0;
+  const totalIGST = invoice?.igstTotal || 0;
 
 
   // ✅ NEW: FIXED ROW COUNT
   const MIN_ROWS = 12;
-  const emptyRows = MIN_ROWS - invoice.items.length;
+  const emptyRows = (MIN_ROWS - (invoice?.items?.length || 0));
+
 
   return (
     <div
@@ -182,6 +140,11 @@ ROAD,</p>
     <span className="font-semibold">Address:</span>{" "}
     {invoice.address || "-"}
   </p>
+    <p className="break-words">
+    <span className="font-semibold">State:</span>{" "}
+    {invoice.state || "-"}
+  </p>
+
                 <p>
                   <span className="font-semibold">Phone:</span>{" "}
                   {invoice.phone || "-"}
@@ -267,16 +230,16 @@ ROAD,</p>
                 {invoice.invoiceType === "GST" && (
                   <>
                     <td className="border-l border-r border-black text-center">
-                      {item.cgst || item.gst / 2}%
+                      {(item.gst / 2).toFixed(2)}%
                     </td>
                     <td className="border-l border-r border-black text-center">
-                      {item.sgst || item.gst / 2}%
+                      {(item.gst / 2).toFixed(2)}%
                     </td>
                   </>
                 )}
 
                 <td className="border-l border-r border-black">
-                  ₹{item.total?.toFixed(2) || "0.00"}
+                  ₹{Number(item.total || 0).toFixed(2)}
                 </td>
               </tr>
             ))}
@@ -313,41 +276,18 @@ ROAD,</p>
             </thead>
 
             <tbody>
-  {GST_SLABS.map((gst, i) => {
-    const data = gstSummary[gst] || {
-       taxable: 0,
-  cgst: 0,
-  sgst: 0,
-  igst: 0
-    };
-  
-     
-
-    return (
-      <tr key={i}>
-        <td className="border-l border-r border-black text-center">
-          {gst}%
-        </td>
-
-        <td className="border-l border-r border-black text-center">
-          ₹{Number(data.taxable || 0).toFixed(2)}
-        </td>
-
-        <td className="border-l border-r border-black text-center">
-          ₹{isInterState ? "0.00" : Number(data.cgst || 0).toFixed(2)}
-        </td>
-
-        <td className="border-l border-r border-black text-center">
-          ₹{isInterState ? "0.00" : Number(data.sgst || 0).toFixed(2)}
-        </td>
-
-        <td className="border-l border-r border-black text-center">
-          ₹{isInterState ? Number(data.igst || 0).toFixed(2) : "0.00"}
-        </td>
-      </tr>
-
-    );
-  })}
+  {GST_SLABS.map((gst,i)=>{
+                const data = gstSummary[gst] || {};
+                return (
+                  <tr key={i}>
+                    <td className="border-1 border-r border-black text-center">{gst}%</td>
+                    <td className="border-1 border-r border-black text-center">₹{(data.taxable||0).toFixed(2)}</td>
+                    <td className="border-1 border-r border-black text-center">₹{(data.cgst||0).toFixed(2)}</td>
+                    <td className="border-1 border-r border-black text-center">₹{(data.sgst||0).toFixed(2)}</td>
+                    <td className="border-1 border-r border-black text-center">₹{(data.igst||0).toFixed(2)}</td>
+                  </tr>
+                );
+              })}
    {/* ✅ PASTE TOTAL ROW EXACTLY HERE */}
   <tr className="border-t-2 border-black font-bold">
     <td className="border-l border-r border-black text-center">
@@ -400,7 +340,7 @@ ROAD,</p>
 
             <div className="p-2 text-right font-bold">
               <p>Net Amount</p>
-              <p>₹{invoice.total?.toFixed(2)}</p>
+              <p>₹{total.toFixed(2)}</p>
             </div>
           </div>
 
